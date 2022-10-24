@@ -2,6 +2,8 @@ import random
 
 yourhandsymbols = []
 yourhandvalue = []
+yourhand = []
+lastcard = []
 
 
 def getsymbolofnumber(numbers):
@@ -21,44 +23,65 @@ def getcardnumber(number):
     return number
 
 
-def getcards(min, max, cardsquanitity):
+def getcards(mind, maxi, cardsquanitity):
     cards = []
-    for i in range(min, max + 1):
-        cards.append(i)
+    for g in range(mind, maxi + 1):
+        cards.append(g)
     for j in range(cardsquanitity):
-        zufallsindex = random.randrange(0, max - min + 1)
+        zufallsindex = random.randrange(0, maxi - mind + 1)
         lastPosition = len(cards) - 1 - j
         cards[zufallsindex], cards[lastPosition] = cards[lastPosition], cards[zufallsindex]
     return cards[-cardsquanitity:]
 
 
-def sameinlist(list):
-    firstelement = list[0]
-    for i in list:
-        if firstelement != i:
-            return False
-    return True
+def getrealvalue(value):
+    realvalue = value + 2
+    if realvalue == 11:
+        return "J"
+    if realvalue == 12:
+        return "Q"
+    if realvalue == 13:
+        return "K"
+    if realvalue == 14:
+        return "Ass"
+    return realvalue
 
 
-def checkforcard(list, values):
-    if list == values:
-        return True
-
-
-def checkforstreet(list):
-    list.sort()
-    for i in range(8):
-        for a in range(i, i + 5):
-            if list == [a, a + 1, a + 2, a + 3, a + 4]:
-                return True
+def checkforpairs(values):
+    duplicates = [number for number in values if values.count(number) > 1]
+    unique_duplicates = list(set(duplicates))
+    return len(duplicates), unique_duplicates
 
 
 def checkfororders(symbols, values):
-    if sameinlist(symbols):
-        if checkforcard(values, [8, 9, 10, 11, 12]):
+    orders = False
+    if symbols.count(symbols[0]) == len(symbols):
+        symbols.sort()
+        if values[0] == values[-1] - 4 and values[-1] == 12:
             print("Royal Flush")
-        elif checkforstreet(values):
+            orders = True
+        elif values[0] == values[-1] - 4:
             print("Straight Flush")
+            orders = True
+        elif not orders:
+            print("Flush")
+    if checkforpairs(values)[0] == 4 and len(checkforpairs(values)[1]) == 1:
+        print("Vierling")
+        orders = True
+    elif checkforpairs(values)[0] == 5 and len(checkforpairs(values)[1]) >= 2:
+        print("Full House")
+        orders = True
+    elif checkforpairs(values)[0] == 3:
+        print("Drilling")
+        orders = True
+    elif checkforpairs(values)[0] == 4 and len(checkforpairs(values)[1]) >= 2:
+        print("Zwei Paare")
+        orders = True
+    elif checkforpairs(values)[0] == 2:
+        print("Paar")
+        orders = True
+    if not orders:
+        print("Highest Card: " + getrealvalue(max(values)))
 
 
 if __name__ == "__main__":
@@ -66,6 +89,9 @@ if __name__ == "__main__":
     for i in yourCards:
         yourhandvalue.append(getcardnumber(i))
         yourhandsymbols.append(getsymbolofnumber(i))
-
-
-checkfororders(yourhandsymbols, yourhandvalue)
+        yourhand.append([getrealvalue(getcardnumber(i)), getsymbolofnumber(i)])
+    checkfororders(yourhandsymbols, yourhandvalue)
+    # yourhand = sorted(yourhand, key=lambda l: l[0])
+    print(yourhand)
+    yourhandvalue = []
+    yourhandsymbols = []
