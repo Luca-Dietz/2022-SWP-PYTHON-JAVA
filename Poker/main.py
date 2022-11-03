@@ -4,6 +4,18 @@ yourhandsymbols = []
 yourhandvalue = []
 yourhand = []
 lastcard = []
+statistik = {
+    "Royal Flush": 0,
+    "Straight Flush": 0,
+    "Vierling": 0,
+    "Full House": 0,
+    "Flush": 0,
+    "Straße": 0,
+    "Drilling": 0,
+    "Zwei Paare": 0,
+    "Paar": 0,
+    "Highest Card": 0
+}
 
 
 def getsymbolofnumber(numbers):
@@ -58,40 +70,54 @@ def checkfororders(symbols, values):
     if symbols.count(symbols[0]) == len(symbols):
         symbols.sort()
         if values[0] == values[-1] - 4 and values[-1] == 12:
-            print("Royal Flush")
+            #print("Royal Flush")
+            statistik["Royal Flush"] += 1
             orders = True
         elif values[0] == values[-1] - 4:
-            print("Straight Flush")
+            #print("Straight Flush")
+            statistik["Straight Flush"] += 1
             orders = True
         elif not orders:
-            print("Flush")
+            #print("Flush")
+            statistik["Flush"] += 1
     if checkforpairs(values)[0] == 4 and len(checkforpairs(values)[1]) == 1:
-        print("Vierling")
+        #print("Vierling")
+        statistik["Vierling"] += 1
         orders = True
     elif checkforpairs(values)[0] == 5 and len(checkforpairs(values)[1]) >= 2:
-        print("Full House")
+        #print("Full House")
+        statistik["Full House"] += 1
         orders = True
     elif checkforpairs(values)[0] == 3:
-        print("Drilling")
+        #print("Drilling")
+        statistik["Drilling"] += 1
         orders = True
     elif checkforpairs(values)[0] == 4 and len(checkforpairs(values)[1]) >= 2:
-        print("Zwei Paare")
+        #print("Zwei Paare")
+        statistik["Zwei Paare"] += 1
         orders = True
     elif checkforpairs(values)[0] == 2:
-        print("Paar")
+        #print("Paar")
+        statistik["Paar"] += 1
         orders = True
+    values.sort()
+    if values[0] == values[-1] - 4 and len(checkforpairs(values)[1]) == 0:
+        statistik["Straße"] += 1
+        order = True
     if not orders:
-        print("Highest Card: " + getrealvalue(max(values)))
-
+        #print("Highest Card: " + getrealvalue(max(values)))
+        statistik["Highest Card"] += 1
 
 if __name__ == "__main__":
-    yourCards = getcards(1, 52, 5)
-    for i in yourCards:
-        yourhandvalue.append(getcardnumber(i))
-        yourhandsymbols.append(getsymbolofnumber(i))
-        yourhand.append([getrealvalue(getcardnumber(i)), getsymbolofnumber(i)])
-    checkfororders(yourhandsymbols, yourhandvalue)
-    # yourhand = sorted(yourhand, key=lambda l: l[0])
-    print(yourhand)
-    yourhandvalue = []
-    yourhandsymbols = []
+    for x in range(10000):
+        yourCards = getcards(1, 52, 5)
+        for i in yourCards:
+            yourhandvalue.append(getcardnumber(i))
+            yourhandsymbols.append(getsymbolofnumber(i))
+            yourhand.append([getrealvalue(getcardnumber(i)), getsymbolofnumber(i)])
+        checkfororders(yourhandsymbols, yourhandvalue)
+        # yourhand = sorted(yourhand, key=lambda l: l[0])
+        # print(yourhand)
+        yourhandvalue = []
+        yourhandsymbols = []
+    print(statistik)
