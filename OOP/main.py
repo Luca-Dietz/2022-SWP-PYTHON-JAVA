@@ -67,7 +67,7 @@ class Firma:
                     male = male + 1
                 else:
                     female = female + 1
-        return {"male": male, "female": female}
+        return {"male": str(male/(male+female)*100) + "%", "female": str(female/(male+female)*100) + "%"}
 
 
 f1 = Firma("Spacks und Pfusch GmbH & Co. KG")
