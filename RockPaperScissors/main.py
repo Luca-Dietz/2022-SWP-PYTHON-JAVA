@@ -1,32 +1,31 @@
 import random
-import mysql.connector
 
-mydb = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="",
-    database="SchereSteinPapier"
-)
+from server import getdata, uploaddata, mydb
 
-mycursor = mydb.cursor()
-
-gameselection = ['Stein', 'Schere', 'Papier', 'Echse', 'Spock']
+gameselection = ['Stein', 'Echse', 'Spock', 'Schere', 'Papier']
+playeroutcomes = []
+pcoutcomes = []
+playerpicks = []
+pcpicks = []
+sorted = []
+weight = []
+locallist = []
 w = 0
 l = 0
 s = 0
+hard = False
+
+menu_options = {
+    1: 'Play Game',
+    2: 'Get Data',
+    3: 'Upload Data',
+    4: 'Exit',
+}
 
 
-def game(yourpick):
-    if yourpick == 'Stein':
-        return 'Echse', 'Schere'
-    if yourpick == 'Schere':
-        return 'Papier', 'Echse'
-    if yourpick == 'Papier':
-        return 'Stein', 'Spock'
-    if yourpick == 'Echse':
-        return 'Spock', 'Papier'
-    if yourpick == 'Spock':
-        return 'Schere', 'Schere'
+def print_menu():
+    for key in menu_options.keys():
+        print(key, '--', menu_options[key])
 
 
 def validateinput(answ):
@@ -35,62 +34,84 @@ def validateinput(answ):
     else:
         return True
 
-def getdata():
-    mycursor = mydb.cursor()
-    mycursor.execute("SELECT * from playerdata")
-    myresult = mycursor.fetchall()
-    mycursor.execute("SELECT * from pcdata")
-    myresult2 = mycursor.fetchall()
-    return myresult, myresult2
 
-def showdata():
-    pass
-
-def maingame(w, l, s):
-    print("Stein Schere Papier Echse Spock")
+def playgame(w, l, s, hard):
+    print("Stein Echse Spock Schere Papier")
     answer = input("Enter your selection: ")
     if not validateinput(answer):
         print("Wrong input")
-        maingame(w, l, s)
-    generated = random.choice(gameselection)
-    print("Computer has chosen: " + generated)
-    if generated in game(answer):
+        playgame(w, l, s, hard)
+    if hard:
+        sorted = []
+        locallist = []
+        weight = []
+        mycursor = mydb.cursor()
+        mycursor.execute("SELECT * from playerdata")
+        myresult = mycursor.fetchall()
+        for i in gameselection:
+            sorted.append([el[2] for el in myresult].count(i))
+        for a in sorted:
+            locallist.append(a / sum(sorted) * 100)
+        for i in range(len(sorted)):
+            weight.append((locallist[(i + 1) % 5]) + (locallist[(i + 3) % 5]))
+        print("Hardmode activated")
+        generated = random.choices(gameselection, weights=weight)[0]
+    else:
+        generated = random.choice(gameselection)
+    print("Computer has chosen: " + str(generated))
+    player = gameselection.index(answer)
+    if gameselection[(player + 1) % 5] == generated or gameselection[(player + 3) % 5] == generated:
         print("You won")
         w = w + 1
         print(w)
-
-        sql = "INSERT INTO playerdata(outcome, pick) VALUES (%s, %s)"
-        val = ("win", answer)
-
-        sql2 = "INSERT INTO pcdata(outcome, pick) VALUES (%s, %s)"
-        val2 = ("lose", generated)
+        playeroutcomes.append("win")
+        pcoutcomes.append("lose")
     elif generated == answer:
         print("same")
         s = s + 1
         print(s)
-
-        sql = "INSERT INTO playerdata(outcome, pick) VALUES (%s, %s)"
-        val = ("same", answer)
-
-        sql2 = "INSERT INTO pcdata(outcome, pick) VALUES (%s, %s)"
-        val2 = ("same", generated)
+        playeroutcomes.append("same")
+        pcoutcomes.append("same")
     else:
         print("You lost")
         l = l + 1
         print(l)
+        playeroutcomes.append("lose")
+        pcoutcomes.append("win")
+    playerpicks.append(answer)
+    pcpicks.append(generated)
+    playagain = input("Do you want to play again: (y/n)")
+    if playagain == "y":
+        playgame(w, l, s, hard)
+    else:
+        maingame(w, l, s, hard)
 
-        sql = "INSERT INTO playerdata(outcome, pick) VALUES (%s, %s)"
-        val = ("lose", answer)
 
-        sql2 = "INSERT INTO pcdata(outcome, pick) VALUES (%s, %s)"
-        val2 = ("win", generated)
-    mycursor.execute(sql, val)
-    mycursor.execute(sql2, val2)
+def choosedifficulty(w, l, s, hard):
+    ans = input("Do you want to play easy or hard? (y/n): ")
+    if ans == "y":
+        hard = True
+        playgame(w, l, s, hard)
+    else:
+        hard = False
+        playgame(w, l, s, hard)
 
-    mydb.commit()
-    maingame(w, l, s)
+
+def maingame(w, l, s, hard):
+    print_menu()
+    option = int(input('Enter your choice: '))
+    if option == 1:
+        choosedifficulty(w, l, s, hard)
+    elif option == 2:
+        getdata(gameselection)
+    elif option == 3:
+        uploaddata(playerpicks, playeroutcomes, pcpicks, pcoutcomes)
+    elif option == 4:
+        print('Thanks for playing')
+        exit()
+    else:
+        print('Invalid option. Please enter a number between 1 and 4.')
 
 
 if __name__ == "__main__":
-    #maingame(w, l, s)
-    print(getdata()[0][0][0])
+    maingame(w, l, s, hard)
