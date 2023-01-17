@@ -1,19 +1,14 @@
+import json
 import random
 
-from server import getdata, uploaddata, mydb
+import requests
 
 gameselection = ['Stein', 'Echse', 'Spock', 'Schere', 'Papier']
 playeroutcomes = []
 pcoutcomes = []
 playerpicks = []
 pcpicks = []
-sorted = []
-weight = []
-locallist = []
-w = 0
-l = 0
-s = 0
-hard = False
+difficultmode = False
 
 menu_options = {
     1: 'Play Game',
@@ -29,83 +24,95 @@ def print_menu():
 
 
 def validateinput(answ):
-    if answ not in gameselection:
-        return False
-    else:
+    if int(answ) in [1, 2, 3, 4, 5]:
         return True
+    else:
+        return False
 
 
-def playgame(w, l, s, hard):
-    print("Stein Echse Spock Schere Papier")
+def playgame(difficultmode):
+    print("1 | Stein\n2 | Echse\n3 | Spock\n4 | Schere\n5 | Papier")
     answer = input("Enter your selection: ")
     if not validateinput(answer):
         print("Wrong input")
-        playgame(w, l, s, hard)
-    if hard:
-        sorted = []
+        playgame(difficultmode)
+    if difficultmode:
+        fnlist = []
         locallist = []
         weight = []
-        mycursor = mydb.cursor()
-        mycursor.execute("SELECT * from playerdata")
-        myresult = mycursor.fetchall()
-        for i in gameselection:
-            sorted.append([el[2] for el in myresult].count(i))
-        for a in sorted:
-            locallist.append(a / sum(sorted) * 100)
-        for i in range(len(sorted)):
+        data = requests.get("http://localhost:5000/").content
+        json_data = json.loads(data)
+        fnlist.append(json_data["Stein"])
+        fnlist.append(json_data["Echse"])
+        fnlist.append(json_data["Spock"])
+        fnlist.append(json_data["Schere"])
+        fnlist.append(json_data["Papier"])
+        for a in fnlist:
+            locallist.append(a / sum(fnlist) * 100)
+        for i in range(len(fnlist)):
             weight.append((locallist[(i + 1) % 5]) + (locallist[(i + 3) % 5]))
-        print("Hardmode activated")
+        print("Difficult mode activated")
         generated = random.choices(gameselection, weights=weight)[0]
     else:
         generated = random.choice(gameselection)
     print("Computer has chosen: " + str(generated))
-    player = gameselection.index(answer)
+    player = int(answer)-1
     if gameselection[(player + 1) % 5] == generated or gameselection[(player + 3) % 5] == generated:
         print("You won")
-        w = w + 1
-        print(w)
+
         playeroutcomes.append("win")
         pcoutcomes.append("lose")
     elif generated == answer:
         print("same")
-        s = s + 1
-        print(s)
+
         playeroutcomes.append("same")
         pcoutcomes.append("same")
     else:
         print("You lost")
-        l = l + 1
-        print(l)
         playeroutcomes.append("lose")
         pcoutcomes.append("win")
     playerpicks.append(answer)
     pcpicks.append(generated)
     playagain = input("Do you want to play again: (y/n)")
     if playagain == "y":
-        playgame(w, l, s, hard)
+        playgame(difficultmode)
     else:
-        maingame(w, l, s, hard)
+        maingame(difficultmode)
 
 
-def choosedifficulty(w, l, s, hard):
-    ans = input("Do you want to play easy or hard? (y/n): ")
+def choosedifficultmode():
+    ans = input("Do you want to play difficultmodemode? (y/n): ")
     if ans == "y":
-        hard = True
-        playgame(w, l, s, hard)
+        difficultmode = True
+        playgame(difficultmode)
     else:
-        hard = False
-        playgame(w, l, s, hard)
+        difficultmode = False
+        playgame(difficultmode)
 
 
-def maingame(w, l, s, hard):
+def maingame(difficultmode):
     print_menu()
     option = int(input('Enter your choice: '))
     if option == 1:
-        choosedifficulty(w, l, s, hard)
+        choosedifficultmode()
     elif option == 2:
-        getdata(gameselection)
+        data = requests.get("http://localhost:5000/").content
+        json_data = json.loads(data)
+        print("\nWin\tLose\tStein\tSchere\tPapier\tEchse\tSpock\t")
+        print(str(json_data["win"]) + "\t" + str(json_data["lose"]) + "\t\t" + str(json_data["Stein"]) +
+              "\t\t" + str(json_data["Schere"]) + "\t\t" + str(json_data["Papier"]) + "\t\t" + str(json_data["Echse"]) +
+              "\t\t" + str(json_data["Spock"]) + "\n")
+        maingame(difficultmode)
     elif option == 3:
-        uploaddata(playerpicks, playeroutcomes, pcpicks, pcoutcomes)
+        result = requests.post("http://localhost:5000/", data=json.dumps({"playerpicks": playerpicks,
+                                                                          "pcpicks": pcpicks,
+                                                                          "playeroutcomes": playeroutcomes,
+                                                                          "pcoutcomes": pcoutcomes}))
+        if result.status_code == 200:
+            print("\nData sent Succesfully\n")
+        else:
+            print("\nFailed\n")
+        maingame(difficultmode)
     elif option == 4:
         print('Thanks for playing')
         exit()
@@ -114,4 +121,4 @@ def maingame(w, l, s, hard):
 
 
 if __name__ == "__main__":
-    maingame(w, l, s, hard)
+    maingame(difficultmode)

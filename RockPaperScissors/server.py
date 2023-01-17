@@ -2,6 +2,8 @@ import json
 
 import flask
 import mysql.connector
+import requests
+from flask import request, jsonify
 from flask_restful import Resource, Api
 
 app = flask.Flask(__name__)
@@ -84,14 +86,17 @@ def show_all_data():
             dict["Echse"] += 1
         elif i[2] == "Spock":
             dict["Spock"] += 1
-    j = json.dumps(dict)
-    return j
+    return jsonify(dict)
 
 
 class ssp(Resource):
     def get(self):
         dic = show_all_data()
-        return "Player data: " + dic
+        return dic
+
+    def post(self):
+        data = request.get_json(force=True)
+        uploaddata(data['playerpicks'], data['playeroutcomes'], data['pcpicks'], data['pcoutcomes'])
 
 
 api.add_resource(ssp, '/')
