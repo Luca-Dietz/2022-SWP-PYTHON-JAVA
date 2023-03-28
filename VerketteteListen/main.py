@@ -20,7 +20,7 @@ class listenlement:
 class VListe:
     def __init__(self):
         # Initialisieren der einfach verketteten Liste mit einem "Kopf"-Element
-        self.startElem = listenlement("Kopf")
+        self.startElem = listenlement(None)
 
     def addlast(self, o):
         # Neues Element wird erstellt
@@ -44,7 +44,6 @@ class VListe:
         nextElem = pointerElem.getnextelem()
         # Neues Element wird als nächstes Element des gefundenen gesetzt
         pointerElem.setnextelem(newElem)
-        # Das nächste Element des neuen Elements wird auf das alte nä
         newElem.setnextelem(nextElem)
 
     def delete(self, o):
@@ -102,5 +101,3 @@ if __name__ == "__main__":
     vlist.writelist()
     print("erstes Element: " + vlist.getfirstelem().getobj())
     print("ist '3' enthalten? " + str(vlist.find("3")))
-
-
